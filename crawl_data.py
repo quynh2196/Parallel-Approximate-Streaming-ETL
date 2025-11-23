@@ -72,9 +72,7 @@ def get_topic(url: str):
 
 # 4. MAIN CRAWLER liên tục
 def main():
-    i=0 # lưu link đã xử lý
-    while i<10:  
-        i += 1
+    while True:  
         for feed in NEWS_FEEDS:
             feed_data = feedparser.parse(feed["rss"])
             for entry in feed_data.entries:  # không giới hạn số bài

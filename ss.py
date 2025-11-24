@@ -19,7 +19,7 @@ def worker(input_queue, output_queue):
 
 if __name__ == "__main__":
     # lay data trong run_time seconds --> lay cung 1 data cho dong deu
-    run_time = 1200 # seconds
+    run_time = 10 # seconds
     stream = main()
     fixed_data = []
     start = time.time()
@@ -40,13 +40,13 @@ if __name__ == "__main__":
     fixed_data = reservoir
     base=0
     print(f"length = {len(fixed_data)}")
-    for n_workers in [1, 2, 4]:
-        print(f"\n {n_workers} workers")
+    for n_threads in [1, 2, 4, 8, 12]:
+        print(f"\n {n_threads} threads")
         input_queue = mp.Queue()
         output_queue = mp.Queue()
         procs = [
             mp.Process(target=worker, args=(input_queue, output_queue))
-            for _ in range(n_workers)
+            for _ in range(n_threads)
         ]
 
         for p in procs:
@@ -55,13 +55,13 @@ if __name__ == "__main__":
         for item in fixed_data:
             input_queue.put(item) # day toan bo data vao input_queue
 
-        for _ in range(n_workers):
+        for _ in range(n_threads):
             input_queue.put("DONE")
 
         start_time = time.time()
         cms_list = []
         total_processed = 0
-        for _ in range(n_workers):
+        for _ in range(n_threads):
             cms_part, cnt = output_queue.get()
             cms_list.append(cms_part)
             total_processed += cnt
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         for p in procs:
             p.join()
         end_time = time.time()
-        if n_workers == 1:
+        if n_threads == 1:
             base=end_time - start_time
         
         print(f"Processed: {total_processed} articles")

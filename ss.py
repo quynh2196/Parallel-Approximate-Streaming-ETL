@@ -2,6 +2,7 @@ import time
 import multiprocessing as mp
 from crawl_data import main
 from ttss import (CountMinSketch, clean_and_tokenize, merge_multiple_cms, compute_title_score, find_title)
+import random
 
 def worker(input_queue, output_queue):
     cms = CountMinSketch()
@@ -18,15 +19,28 @@ def worker(input_queue, output_queue):
 
 if __name__ == "__main__":
     # lay data trong run_time seconds --> lay cung 1 data cho dong deu
-    run_time = 10  # seconds
+    run_time = 600 # seconds
     stream = main()
     fixed_data = []
     start = time.time()
-    while time.time() - start < run_time:
-        fixed_data.append(next(stream))
-    print(f"length = {len(fixed_data)}")
 
-    for n_workers in [1, 2, 4, 8]:
+    k = 2160  # mau data co dinh
+    reservoir = []
+    count = 0
+    while time.time() - start < run_time:
+        item = next(stream)
+        count += 1
+        if count <= k:
+            reservoir.append(item)
+        else:
+            j = random.randint(0, count - 1)
+            if j < k:
+                reservoir[j] = item
+
+    fixed_data = reservoir
+    base=0
+    print(f"length = {len(fixed_data)}")
+    for n_workers in [1, 2, 4]:
         print(f"\n {n_workers} workers")
         input_queue = mp.Queue()
         output_queue = mp.Queue()
@@ -59,8 +73,12 @@ if __name__ == "__main__":
         for p in procs:
             p.join()
         end_time = time.time()
-
+        if n_workers == 1:
+            base=end_time - start_time
+        
         print(f"Processed: {total_processed} articles")
         print(f"Best title: {best_title}  (score={best_score})")
         print(f"Time: {(end_time - start_time)*1000:.2f} ms")
+        print(f"speed: {base/(end_time-start_time)}")
+
 

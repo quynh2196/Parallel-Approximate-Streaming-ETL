@@ -24,8 +24,8 @@ if __name__ == "__main__":
     fixed_data = []
     start = time.time()
 
-    k = 2160  # mau data co dinh
-    reservoir = []
+    k = 2160  
+    reservoir = [] # reservoir sampling with k
     count = 0
     while time.time() - start < run_time:
         item = next(stream)
@@ -80,5 +80,6 @@ if __name__ == "__main__":
         print(f"Best title: {best_title}  (score={best_score})")
         print(f"Time: {(end_time - start_time)*1000:.2f} ms")
         print(f"speed: {base/(end_time-start_time)}")
+
 
 

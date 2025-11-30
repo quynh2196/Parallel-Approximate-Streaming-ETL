@@ -6,21 +6,22 @@ import random
 
 def worker(input_queue, output_queue):
     cms = CountMinSketch()
-    num_processed = 0 # so luong bai bao
+    num_processed = 0
     while True:
-        item = input_queue.get()
-        if item == "DONE":
+        batch = input_queue.get()
+        if batch == "DONE":
             break
-        title = item["title"]
-        for t in clean_and_tokenize(title):
-            cms.add(t)
-        num_processed += 1
+        for item in batch:
+            title = item["title"]
+            for t in clean_and_tokenize(title):
+                cms.add(t)
+            num_processed += 1
     output_queue.put((cms, num_processed))
 
 if __name__ == "__main__":
     # lay data trong run_time seconds --> lay cung 1 data cho dong deu
-    run_time = 10 # seconds
-    stream = main()
+    run_time =600 # seconds
+    stream = main()    
     fixed_data = []
     start = time.time()
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     fixed_data = reservoir
     base=0
     print(f"length = {len(fixed_data)}")
-    for n_threads in [1, 2, 4, 8, 12]:
+    for n_threads in [1, 2, 4, 8, 12, 16, 20]:
         print(f"\n {n_threads} threads")
         input_queue = mp.Queue()
         output_queue = mp.Queue()
@@ -52,9 +53,16 @@ if __name__ == "__main__":
         for p in procs:
             p.start()
 
+        batch_size = 100
+        batch = []
         for item in fixed_data:
-            input_queue.put(item) # day toan bo data vao input_queue
-
+            batch.append(item)
+            if len(batch) >= batch_size:
+                input_queue.put(batch)
+                batch = []
+        if batch:
+            input_queue.put(batch) # day toan bo data vao input_queue
+            
         for _ in range(n_threads):
             input_queue.put("DONE")
 

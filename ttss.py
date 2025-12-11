@@ -1,16 +1,7 @@
 import re
-import time
-import math
-import random
-import multiprocessing as mp
-from collections import defaultdict, Counter
-
-#data
-from crawl_data import main 
-data = main() 
+import mmh3
 
 #  CMS
-import mmh3
 class CountMinSketch:
     def __init__(self, width=2000, depth=5):
         self.width = width
@@ -37,6 +28,7 @@ VN_STOPWORDS = {
     "năm", "tháng", "ngày", "hôm",
 }
 
+# chuyển mỗi title -> token
 def clean_and_tokenize(text):
     text = text.lower()
     text = re.sub(r"[^a-zA-ZÀ-Ỹà-ỹ0-9\s]", " ", text)
@@ -44,25 +36,7 @@ def clean_and_tokenize(text):
     tokens = list({t for t in tokens if t not in VN_STOPWORDS and len(t) > 1})
     return tokens
 
-# score title
-def compute_title_score(cms, title):
-    tokens = clean_and_tokenize(title)
-    score = 0
-    for w in tokens:
-        tf = cms.query(w)
-        score +=tf
-    return score
-
-# gop cms
-def merge_multiple_cms(cms_list):
-    base = cms_list[0]
-    for cms in cms_list[1:]:
-        for d in range(base.depth):
-            for w in range(base.width):
-                base.table[d][w] += cms.table[d][w]
-    return base
-
-# cms 
+# update cms mỗi khi có thêm 1 title
 def streaming_pipeline_realtime(stream_data):
     cms = CountMinSketch()
     for item in stream_data:
@@ -72,7 +46,26 @@ def streaming_pipeline_realtime(stream_data):
             cms.add(t)
     return cms
 
-# last_title
+# gộp cms của mỗi thread thành 1 cms chung
+def merge_multiple_cms(cms_list):
+    base = cms_list[0]
+    for cms in cms_list[1:]:
+        for d in range(base.depth):
+            for w in range(base.width):
+                base.table[d][w] += cms.table[d][w]
+    return base
+
+# tính score của title
+def compute_title_score(cms, title):
+    tokens = clean_and_tokenize(title)
+    score = 0
+    for w in tokens:
+        tf = cms.query(w)
+        score +=tf
+    return score
+
+
+# find best title 
 def find_title(stream_data, cms_list):
     cms_last = merge_multiple_cms(cms_list)
     best_score = -1
@@ -84,5 +77,4 @@ def find_title(stream_data, cms_list):
             best_score = score
             best_title = title
     return best_title
-
 

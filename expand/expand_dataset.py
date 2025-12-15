@@ -1,8 +1,8 @@
 import json
 
 INPUT_FILE  = "filtered_news_dataset.json"      # 70k
-OUTPUT_FILE = "filtered_news_dataset_2M.json"   # 2M
-TARGET = 2_000_000
+OUTPUT_FILE = "filtered_news_dataset_7M.json"   # 700k
+TARGET = 7_000_000
 
 
 def main():
@@ -25,7 +25,8 @@ def main():
             print(f"Generated {len(out)} records")
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False)
+        json.dump(out, f, ensure_ascii=False, indent=2)
+
 
     print("Done.")
     print("Output file:", OUTPUT_FILE)
